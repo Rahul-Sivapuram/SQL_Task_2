@@ -6,8 +6,6 @@ select * from Products;
 select * from Shippers;
 select * from Suppliers;
 
-select * from sample order by EmployeeID
-
 /*1q*/
 select Employee.FirstName,Employee.LastName from Employee 
 left join 
