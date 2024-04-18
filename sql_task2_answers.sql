@@ -1,4 +1,3 @@
-/* sql task2 asnwers */
 select * from Orders;
 select * from OrderDetails;
 select * from Employee;
@@ -6,10 +5,9 @@ select * from Products;
 select * from Shippers;
 select * from Suppliers;
 
-select * from sample order by EmployeeID
 
 /*1q*/
-select Employee.FirstName,Employee.LastName from Employee 
+select distinct Employee.FirstName,Employee.LastName from Employee 
 left join 
 Orders on Orders.EmployeeID = Employee.EmployeeID 
 where Orders.OrderDate between '1996-08-15' and '1997-08-15'; 
@@ -24,12 +22,12 @@ Orders on Orders.OrderID = OrderDetails.OrderID
 where Orders.OrderDate between '1997-01-13' and '1997-04-16'; 
 
 /*4q*/
- select sum(OrderDetails.Quantity) as TotalQuantity from OrderDetails where OrderDetails.OrderID in 
- (select Orders.OrderId from Orders 
+ select sum(distinct Quantity) as totalquantity from OrderDetails inner join
+ (select distinct Orders.OrderId from Orders 
  left join 
  Employee on Orders.EmployeeID = Employee.EmployeeID 
  where concat(Employee.FirstName,Employee.LastName)='AnneDodsworth' and 
- Orders.OrderDate between '1997-01-13' and '1997-04-16');
+ Orders.OrderDate between '1997-01-13' and '1997-04-16') as q on q.OrderID = OrderDetails.OrderID;
 
 /*5q*/
 select count(Orders.OrderID) as OrdersPlaced from Orders 
@@ -38,9 +36,9 @@ Employee on Orders.EmployeeID = Employee.EmployeeID
 where CONCAT(Employee.FirstName,Employee.LastName)='RobertKing';
 
 /*6q*/
-select count(OrderDetails.ProductID) as ProductsOrdered from OrderDetails where OrderDetails.OrderID in (
+select count(distinct OrderDetails.ProductID) as ProductsOrdered from OrderDetails where OrderDetails.OrderID in (
 select Orders.OrderId from Orders left join Employee on Orders.EmployeeID = Employee.EmployeeID 
-where CONCAT(Employee.FirstName,Employee.LastName)='RobertKing' and Orders.OrderDate between '1996-07-15' and '1997-07-15');
+where CONCAT(Employee.FirstName,Employee.LastName)='RobertKing' and Orders.OrderDate between '1996-08-15' and '1997-08-15');
 
 /*7q*/
 select Employee.EmployeeID,CONCAT(Employee.FirstName,Employee.LastName) as EmployeeName,Employee.HomePhone from Employee 
@@ -65,11 +63,12 @@ OrderDetails on OrderDetails.OrderID = Orders.OrderID group by OrderDetails.Prod
 order by ShippedCount) as sub on sub.ProductID = Products.ProductID;
 
 /*10q*/
-select (OrderDetails.UnitPrice * OrderDetails.Quantity)-(OrderDetails.UnitPrice * OrderDetails.Quantity * OrderDetails.Discount)
+select distinct (OrderDetails.UnitPrice * OrderDetails.Quantity)-(OrderDetails.Quantity * OrderDetails.UnitPrice * OrderDetails.Discount)
 as TotalPrice
 from OrderDetails where OrderDetails.OrderId=
 (select Orders.OrderID from Orders left join Employee on Orders.EmployeeID = Employee.EmployeeID
 where CONCAT(Employee.FirstName,Employee.LastName)='LauraCallahan' and Orders.OrderDate = '1997-01-13');
+
 
 /*11*/
 select count(distinct Orders.EmployeeID) from Orders inner join( 
@@ -88,7 +87,7 @@ inner join Products on Products.ProductID = SubqueryResult.ProductID where Produ
 on RequiredEmployees.EmployeeID= Employee.EmployeeID;
 
 /*13*/
-select Employee.EmployeeID,concat(Employee.FirstName,Employee.LastName) as EmployeeName,Employee.BirthDate from Employee
+select distinct Employee.EmployeeID,concat(Employee.FirstName,Employee.LastName) as EmployeeName,Employee.BirthDate from Employee
 left join
 (select Orders.EmployeeID from Orders where month(Orders.OrderDate) = '7') as SubqueryResult 
 on SubqueryResult.EmployeeID=Employee.EmployeeID;
@@ -123,15 +122,16 @@ join (
 
 
 /*18*/
-select concat(Employee.FirstName,Employee.LastName) as EmployeeName from Employee inner join(
+select distinct concat(Employee.FirstName,Employee.LastName) as EmployeeName from Employee inner join(
 select Orders.EmployeeID from Orders where Orders.OrderDate != '1997-04-04')as sub on sub.EmployeeID=Employee.EmployeeID;
 
 /*19*/
 select sum(finaltable.ProductCount) as ProductsDelivered from (
-select OrderDetails.OrderID,count(OrderDetails.ProductID) as ProductCount from OrderDetails join(
+select distinct OrderDetails.OrderID,count(OrderDetails.ProductID) as ProductCount from OrderDetails join(
 select Orders.OrderId from Orders where Orders.EmployeeID = (select Employee.EmployeeID from Employee 
 where concat(Employee.FirstName,Employee.LastName) = 'StevenBuchanan'))as sub on sub.OrderID=OrderDetails.OrderID 
 group by OrderDetails.OrderID)as finaltable;
+
 
 /*20*/
 select count(Orders.OrderID) as OrdersCount from Orders where Orders.EmployeeID = 
@@ -146,19 +146,25 @@ select Suppliers.SupplierID from Suppliers where Suppliers.Country = 'UK' or Sup
 
 /*22*/
 select sum(subquery.Quantity) as AmountExoticLiquids from
-(select OrderDetails.ProductID,OrderDetails.OrderID,OrderDetails.Quantity from Orders inner join OrderDetails on OrderDetails.OrderID = Orders.OrderID
+(select distinct OrderDetails.ProductID,OrderDetails.OrderID,OrderDetails.Quantity from Orders inner join 
+OrderDetails on OrderDetails.OrderID = Orders.OrderID
 where month(Orders.OrderDate) = '01' and year(Orders.OrderDate) = '1997') as subquery inner join 
 Products on Products.ProductID = subquery.ProductID where Products.SupplierID in(
 select Suppliers.SupplierID from Suppliers where Suppliers.CompanyName = 'Exotic Liquids');
 
 /*23*/
-select subquery.OrderDate from (
-select Orders.OrderDate,OrderDetails.ProductID from Orders inner join OrderDetails on OrderDetails.OrderID = Orders.OrderID
-where month(Orders.OrderDate) = '01' and year(Orders.OrderDate) = '1997') as subquery inner join 
-Products on Products.ProductID = subquery.ProductID
-where Products.SupplierId not in
-(
-	select Suppliers.SupplierID from Suppliers where Suppliers.CompanyName = 'Tokyo Traders'
+SELECT DISTINCT q.OrderDate
+FROM (select distinct Orders.OrderDate,Products.SupplierID from Orders 
+inner join OrderDetails on OrderDetails.OrderID=Orders.OrderID
+inner join Products on Products.ProductID = OrderDetails.ProductID 
+where month(Orders.OrderDate) = '01' and year(Orders.OrderDate)='1997') as q
+where q.OrderDate not in (
+	SELECT DISTINCT s.OrderDate
+	FROM (select distinct Orders.OrderDate,Products.SupplierID from Orders 
+	inner join OrderDetails on OrderDetails.OrderID=Orders.OrderID
+	inner join Products on Products.ProductID = OrderDetails.ProductID 
+	where month(Orders.OrderDate) = '01' and year(Orders.OrderDate)='1997') as s
+	where s.SupplierID = 4
 );
 
 /*24*/
@@ -174,18 +180,22 @@ where
 ) as sub inner join Employee on Employee.EmployeeID = sub.EmployeeID;
 
 /*25*/
-select top 1 subquery.SupplierID,Count(subquery.OrderID) as NoOfOrders from(
-select sub.OrderID,Products.SupplierID from (
-	select Orders.OrderID,OrderDetails.ProductID,Orders.OrderDate from Orders 
-	inner join OrderDetails on OrderDetails.OrderID = Orders.OrderID
-	where month(Orders.OrderDate) in (9,10) and year(Orders.OrderDate) = 1997
-	)as sub inner join Products on Products.ProductID = sub.ProductID) as subquery group by subquery.SupplierID 
-	order by Count(subquery.OrderID);
+select Orders.ShipperID,sum(sub.NoOfProducts) as NoOfShippedProducts from Orders inner join( 
+select q.OrderID,count(q.ProductID) as NoOfProducts from(
+select distinct Orders.OrderID,OrderDetails.ProductID,Orders.OrderDate,Orders.ShipperID from Orders 
+inner join OrderDetails on OrderDetails.OrderID = Orders.OrderID
+where month(Orders.OrderDate) in (9,10) and year(Orders.OrderDate) = 1997) as q group by q.OrderID) as sub on sub.OrderID
+= Orders.OrderID group by Orders.ShipperID order by NoOfShippedProducts;
+
 
 /*26*/
-select Products.ProductName,sub.ShippedDate from Products inner join (
-select Orders.OrderID,Orders.ShippedDate,OrderDetails.ProductID from Orders inner join OrderDetails on OrderDetails.OrderID = Orders.OrderID
-where month(Orders.ShippedDate) != 8 and year(Orders.ShippedDate) != 1997) as sub on Products.ProductID = sub.ProductID;
+select distinct OrderDetails.ProductID from Orders inner join 
+OrderDetails on OrderDetails.OrderID = Orders.OrderID
+where month(Orders.ShippedDate) != 8 and year(Orders.ShippedDate) != 1997 and OrderDetails.ProductID 
+not in
+(select distinct OrderDetails.ProductID from Orders inner join 
+OrderDetails on OrderDetails.OrderID = Orders.OrderID
+where month(Orders.ShippedDate) = 8 and year(Orders.ShippedDate) = 1997)
 
 /*27*/
 CREATE VIEW sample AS
@@ -214,8 +224,6 @@ SELECT EmployeeID, ProductID
 FROM unorderedproducts 
 GROUP BY EmployeeID, ProductID
 order by EmployeeID;
-
-
 
 /*28*/
 select Shippers.ShipperID,Shippers.CompanyName from Shippers inner join (
