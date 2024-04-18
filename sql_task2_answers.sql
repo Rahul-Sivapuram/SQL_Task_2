@@ -1,3 +1,4 @@
+/* sql task2 questions */
 select * from Orders;
 select * from OrderDetails;
 select * from Employee;
@@ -333,7 +334,3 @@ case
 	when Orders.ShipperID = 3 then 'United Package'
 end as ShipperCompanyName
 from Orders where Orders.EmployeeID in (1,3,5,7) order by Orders.OrderID;
-
-
-
-
